@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.Extensions.Hosting;
+using System.Threading.Tasks;
 
 namespace ComputerVisionTensorFlowMLNETConsoleApp
 {
@@ -36,7 +37,11 @@ namespace ComputerVisionTensorFlowMLNETConsoleApp
             dnnModelsFolder = "DNNModels";
             imagesFolder = "ImagesForInference";
 
-            List<string> imageFileNamesToInfer = new List<string>() { "ImagesForInference/green-frisbee.jpg" };
+            List<string> imageFileNamesToInfer = new List<string>() { "ImagesForInference/mug-white.jpg",
+                                                                      "ImagesForInference/t-shirt-dotnet-4.0.jpg",
+                                                                      "ImagesForInference/green-frisbee.jpg",
+                                                                      "ImagesForInference/Jersey-Red.jpg"
+                                                                    };
 
             if (downloadAndUpdatePreTrainedModel)
                 DownloadInceptionv3ModelFiles(dnnModelsFolder);
@@ -58,15 +63,49 @@ namespace ComputerVisionTensorFlowMLNETConsoleApp
                 {
                     Console.WriteLine($"Error: UnsupportedMediaType");
                     Environment.Exit(1);
-                }                
+                }
 
-                //ITensorFlowPredictionStrategy predictionServices = new TensorFlowPredictionStrategy(settings,
-                //                                                                                    environment);
+                ITensorFlowPredictionStrategy predictionServices = new TensorFlowPredictionStrategy(settings,
+                                                                                                    environment);
+                // If calling from async method instead of Main()
+                //tagsForCurrentImage = await predictionServices.ClassifyImageAsync(imageBytes);
 
-                //tagsForCurrentImage = await predictionServices.ClassifyImageAsync(imageData);
+                // Calling an async method from Main()
+                //
+                try
+                {
+                    // Start a task - calling an async function
+                    Task<IEnumerable<string>> callTask = Task.Run(() => predictionServices.ClassifyImageAsync(imageBytes));
+
+                    // Wait for it to finish
+                    callTask.Wait();
+
+                    // Get the result
+                    tagsForCurrentImage = callTask.Result;
+
+                    Console.WriteLine("=====================================================================");
+                    Console.WriteLine(" ");
+
+                    Console.WriteLine($"Image file{fileName} is classified by TensorFlow model as the following tags: ");
+
+                    foreach (var tag in tagsForCurrentImage)
+                    {
+                        Console.WriteLine($"Tag: {tag}");
+                    }
+
+                    Console.WriteLine(" ");
+                    Console.WriteLine("=====================================================================");
 
 
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Caught Exception: {ex.Message}");
+                }
             }
+
+            Console.WriteLine(" ");
+            Console.WriteLine("======================= END OF PROCESS ========================");
         }
         
         // If using Dependency Injection in an IHost this code would not be necessary

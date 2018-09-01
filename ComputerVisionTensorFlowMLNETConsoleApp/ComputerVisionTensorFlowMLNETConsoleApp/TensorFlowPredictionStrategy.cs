@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Hosting;
+using System.Linq;
 
 namespace ComputerVisionTensorFlowMLNETConsoleApp
 {
@@ -23,11 +24,11 @@ namespace ComputerVisionTensorFlowMLNETConsoleApp
         private readonly Dictionary<Approaches, IClassifier> models;
         private readonly Approaches defaultModel;
 
-        public TensorFlowPredictionStrategy(IOptionsSnapshot<AppSettings> settings, IHostingEnvironment environment)
+        public TensorFlowPredictionStrategy(AppSettings settings, IHostingEnvironment environment)
         {
             object parseDefaultModel;
             defaultModel =
-                (Enum.TryParse(typeof(Approaches), settings.Value.TensorFlowPredictionDefaultModel, ignoreCase: true, result: out parseDefaultModel)) ?
+                (Enum.TryParse(typeof(Approaches), settings.TensorFlowPredictionDefaultModel, ignoreCase: true, result: out parseDefaultModel)) ?
                 (Approaches)parseDefaultModel :
                  Approaches.Default;
 
@@ -36,8 +37,8 @@ namespace ComputerVisionTensorFlowMLNETConsoleApp
 
             models = new Dictionary<Approaches, IClassifier>
             {
-                //{ Approaches.TensorFlowPreTrained, new TensorFlowInceptionPrediction(settings, environment) },
-                //{ Approaches.TensorFlowCustom, new TensorFlowModelPrediction(settings, environment) }
+                { Approaches.TensorFlowPreTrained, new TensorFlowInceptionPrediction(settings, environment) },
+                { Approaches.TensorFlowCustom, new TensorFlowModelPrediction(settings, environment) }
             };
         }
 
@@ -49,12 +50,10 @@ namespace ComputerVisionTensorFlowMLNETConsoleApp
         /// 
         public async System.Threading.Tasks.Task<IEnumerable<string>> ClassifyImageAsync(byte[] image)
         {
-            //var classification = await models[defaultModel].ClassifyImageAsync(image);
+            var classification = await models[defaultModel].ClassifyImageAsync(image);
 
-            //return classification.OrderByDescending(c => c.Probability)
-            //    .Select(c => c.Label);
-
-            return null;
+            return classification.OrderByDescending(c => c.Probability)
+                .Select(c => c.Label);
         }
     }
 }

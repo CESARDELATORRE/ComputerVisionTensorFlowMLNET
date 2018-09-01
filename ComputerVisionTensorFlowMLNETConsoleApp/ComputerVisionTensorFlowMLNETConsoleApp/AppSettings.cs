@@ -8,6 +8,6 @@ namespace ComputerVisionTensorFlowMLNETConsoleApp
     public class AppSettings
     {
         public string AIModelsPath { get; set; }
-        public string TensorFlowPredictionDefaultModel { get; set; }
+        public string TensorFlowPredictionDefaultModel { get; set; } //TensorFlowPreTrained|TensorFlowCustom
     }
 }
